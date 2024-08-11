@@ -1,246 +1,356 @@
-<html><head><base href="https://websim.experience/iris-analysis/">
+<html><head><base href="https://okin0302.github.io/iris-Multivariate-Pair-Graph-Analysis/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iris Dataset Analysis: 2048-Style</title>
+    <title>Iris Multivariate Analysis</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.4/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
         body {
-            font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
-            background: #faf8ef;
-            color: #776e65;
+            font-family: 'Roboto', sans-serif;
             margin: 0;
             padding: 0;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
-        .container {
-            width: 500px;
-            margin: 0 auto;
-            padding: 15px;
+        .header {
+            background: linear-gradient(90deg, #2c3e50, #3498db);
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
         h1 {
-            font-size: 80px;
-            font-weight: bold;
             margin: 0;
-            display: block;
-            float: left;
+            font-size: 2.5em;
+            font-weight: 300;
+            letter-spacing: 2px;
         }
-        .subtitle {
-            font-size: 18px;
-            margin-top: 10px;
-            color: #776e65;
-        }
-        .chart-container {
-            background: #bbada0;
-            border-radius: 6px;
-            padding: 15px;
-            margin-top: 20px;
-            position: relative;
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+            flex-grow: 1;
+            box-sizing: border-box;
         }
         .chart {
-            width: 470px;
-            height: 470px;
-            background: #ccc0b3;
-            border-radius: 6px;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
             overflow: hidden;
+            transition: box-shadow 0.3s ease;
         }
-        .chart-title {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #eee4da;
+        .chart:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
         }
-        .description {
-            font-size: 13px;
-            line-height: 1.65;
-            margin-top: 10px;
-        }
-        .button {
-            background: #8f7a66;
-            border-radius: 3px;
-            padding: 0 20px;
-            text-decoration: none;
-            color: #f9f6f2;
-            height: 40px;
-            line-height: 42px;
-            display: inline-block;
+        .footer {
+            background: linear-gradient(90deg, #2c3e50, #3498db);
+            color: white;
+            padding: 20px;
             text-align: center;
-            float: right;
-            margin-top: 5px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        }
+        #randomize-button {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1.2em;
+            border-radius: 30px;
             cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            outline: none;
+        }
+        #randomize-button:hover {
+            background-color: #27ae60;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        #randomize-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        #data-count {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #ecf0f1;
+            margin-top: 10px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
 <body>
+    <div class="header">
+        <h1>Iris Multivariate Analysis</h1>
+    </div>
     <div class="container">
-        <h1>Iris</h1>
-        <div class="button" onclick="location.reload()">New Analysis</div>
-        <div style="clear: both;"></div>
-        <p class="subtitle">Join the numbers and analyze the Iris dataset!</p>
-        
-        <div class="chart-container">
-            <div class="chart-title">4x4 Accuracy Chart</div>
-            <div class="chart" id="accuracy-chart"></div>
-            <p class="description">
-                This 4x4 Accuracy Chart visualizes the classification accuracy for each pair of features in the Iris dataset. The color intensity represents the accuracy level, with darker colors indicating higher accuracy.
-            </p>
-        </div>
-        
-        <div class="chart-container">
-            <div class="chart-title">Multivariate Pair Graph</div>
-            <div class="chart" id="multivariate-chart"></div>
-            <p class="description">
-                The Multivariate Pair Graph Analysis shows relationships between different features of the Iris dataset. It includes scatter plots for each pair of features, histograms for individual feature distributions, and density plots.
-            </p>
-        </div>
+        <div id="pair-plot" class="chart"></div>
+        <div id="accuracy-chart" class="chart"></div>
+    </div>
+    <div class="footer">
+        <button id="randomize-button">Randomize Data</button>
+        <div id="data-count">Data points: 150</div>
     </div>
 
     <script>
-        // 4x4 Accuracy Chart
-        var accuracyData = [
-            {
-                z: [
-                    [1.00, 0.85, 0.92, 0.78],
-                    [0.85, 1.00, 0.89, 0.82],
-                    [0.92, 0.89, 1.00, 0.95],
-                    [0.78, 0.82, 0.95, 1.00]
-                ],
-                x: ['Sepal Length', 'Sepal Width', 'Petal Length', 'Petal Width'],
-                y: ['Sepal Length', 'Sepal Width', 'Petal Length', 'Petal Width'],
-                type: 'heatmap',
-                colorscale: [
-                    [0, '#ccc0b3'],
-                    [0.5, '#eee4da'],
-                    [0.75, '#ede0c8'],
-                    [1, '#f2b179']
-                ]
-            }
-        ];
+        let fullData;
+        let currentData;
 
-        var accuracyLayout = {
-            title: '',
-            annotations: [],
-            xaxis: {title: '', showgrid: false, zeroline: false, showticklabels: false},
-            yaxis: {title: '', showgrid: false, zeroline: false, showticklabels: false},
-            margin: {l: 0, r: 0, t: 0, b: 0},
-            width: 470,
-            height: 470
-        };
-
-        for (var i = 0; i < 4; i++) {
-            for (var j = 0; j < 4; j++) {
-                var currentValue = accuracyData[0].z[i][j];
-                var textColor = currentValue < 0.9 ? '#776e65' : '#f9f6f2';
-                var result = {
-                    xref: 'x1',
-                    yref: 'y1',
-                    x: j,
-                    y: i,
-                    text: currentValue.toFixed(2),
-                    font: {
-                        color: textColor,
-                        size: 20,
-                        weight: 'bold'
-                    },
-                    showarrow: false
-                };
-                accuracyLayout.annotations.push(result);
+        Papa.parse('https://raw.githubusercontent.com/mwaskom/seaborn-data/master/iris.csv', {
+            download: true,
+            header: true,
+            complete: function(results) {
+                fullData = results.data;
+                updateData(150);
+                createPairPlot();
+                createAccuracyChart();
+                window.addEventListener('resize', resizeCharts);
+                resizeCharts();
             }
+        });
+
+        document.getElementById('randomize-button').addEventListener('click', function() {
+            const randomCount = Math.floor(Math.random() * (500 - 100 + 1)) + 100;
+            document.getElementById('data-count').textContent = `Data points: ${randomCount}`;
+            updateData(randomCount);
+            updateCharts();
+        });
+
+        function updateData(numPoints) {
+            currentData = fullData.slice(0, numPoints);
         }
 
-        Plotly.newPlot('accuracy-chart', accuracyData, accuracyLayout, {staticPlot: true});
+        function createPairPlot() {
+            const features = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width'];
+            const species = ['setosa', 'versicolor', 'virginica'];
+            const colors = ['#FF7F0E', '#2CA02C', '#1F77B4'];
+            
+            let traces = [];
 
-        // Multivariate Pair Graph Analysis
-        function createMultivariateChart() {
-            d3.csv("https://raw.githubusercontent.com/mwaskom/seaborn-data/master/iris.csv").then(function(data) {
-                const features = ["sepal_length", "sepal_width", "petal_length", "petal_width"];
-                const n = features.length;
+            for (let i = 0; i < features.length; i++) {
+                for (let j = 0; j < features.length; j++) {
+                    if (i === j) {
+                        // Create histogram for diagonal plots
+                        for (let k = 0; k < species.length; k++) {
+                            traces.push({
+                                x: currentData.filter(d => d.species === species[k]).map(d => d[features[i]]),
+                                type: 'histogram',
+                                name: species[k],
+                                xaxis: `x${i * 4 + j + 1}`,
+                                yaxis: `y${i * 4 + j + 1}`,
+                                showlegend: i === 0 && j === 0,
+                                marker: { color: colors[k] },
+                                opacity: 0.7
+                            });
+                        }
+                    } else {
+                        // Create scatter plots for non-diagonal plots
+                        for (let k = 0; k < species.length; k++) {
+                            traces.push({
+                                x: currentData.filter(d => d.species === species[k]).map(d => d[features[j]]),
+                                y: currentData.filter(d => d.species === species[k]).map(d => d[features[i]]),
+                                mode: 'markers',
+                                type: 'scatter',
+                                name: species[k],
+                                xaxis: `x${i * 4 + j + 1}`,
+                                yaxis: `y${i * 4 + j + 1}`,
+                                showlegend: i === 0 && j === 1 && k === 0,
+                                marker: { 
+                                    color: colors[k],
+                                    size: 6,
+                                    opacity: 0.7
+                                }
+                            });
+                        }
+                    }
+                }
+            }
 
-                const color = d3.scaleOrdinal()
-                    .domain(["setosa", "versicolor", "virginica"])
-                    .range(["#edc22e", "#f67c5f", "#6eced3"]);
+            const layout = {
+                title: {
+                    text: 'Multivariate Pair Graph',
+                    font: {
+                        size: 24,
+                        color: '#2c3e50'
+                    }
+                },
+                grid: {rows: 4, columns: 4, pattern: 'independent'},
+                showlegend: true,
+                legend: {
+                    title: {text: 'Species'},
+                    traceorder: 'normal'
+                },
+                margin: {l: 60, r: 40, b: 60, t: 80},
+                paper_bgcolor: '#F8F8F8',
+                plot_bgcolor: '#F8F8F8'
+            };
 
-                const plotSize = 110;
-                const margin = {top: 10, right: 10, bottom: 10, left: 10};
-                const width = 470;
-                const height = 470;
+            for (let i = 0; i < 16; i++) {
+                layout[`xaxis${i + 1}`] = {
+                    title: i >= 12 ? features[i % 4].replace('_', ' ') : '',
+                    showticklabels: i >= 12,
+                    showgrid: false,
+                    automargin: true
+                };
+                layout[`yaxis${i + 1}`] = {
+                    title: i % 4 === 0 ? features[Math.floor(i / 4)].replace('_', ' ') : '',
+                    showticklabels: i % 4 === 0,
+                    showgrid: false,
+                    automargin: true
+                };
+            }
 
-                d3.select("#multivariate-chart").select("svg").remove();
+            Plotly.newPlot('pair-plot', traces, layout, {responsive: true});
+        }
 
-                const svg = d3.select("#multivariate-chart")
-                    .append("svg")
-                    .attr("width", width)
-                    .attr("height", height)
-                    .append("g")
-                    .attr("transform", `translate(${margin.left},${margin.top})`);
+        function createAccuracyChart() {
+            const features = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width'];
+            
+            // Simulated accuracy calculation based on data size
+            const accuracyData = calculateAccuracy();
 
-                const xScales = features.map(feature => 
-                    d3.scaleLinear()
-                        .domain(d3.extent(data, d => +d[feature]))
-                        .range([0, plotSize])
-                );
+            const trace = {
+                z: accuracyData,
+                x: features.map(f => f.replace('_', ' ')),
+                y: features.map(f => f.replace('_', ' ')),
+                type: 'heatmap',
+                colorscale: 'Viridis'
+            };
 
-                const yScales = features.map(feature => 
-                    d3.scaleLinear()
-                        .domain(d3.extent(data, d => +d[feature]))
-                        .range([plotSize, 0])
-                );
+            const layout = {
+                title: {
+                    text: '4x4 Accuracy Chart',
+                    font: {
+                        size: 24,
+                        color: '#2c3e50'
+                    }
+                },
+                annotations: [],
+                xaxis: {title: 'Features', automargin: true},
+                yaxis: {title: 'Features', automargin: true},
+                margin: {l: 100, r: 60, b: 100, t: 80}
+            };
 
-                features.forEach((feature1, i) => {
-                    features.forEach((feature2, j) => {
-                        const cell = svg.append("g")
-                            .attr("transform", `translate(${i * (plotSize + 10)},${j * (plotSize + 10)})`);
-
-                        cell.append("rect")
-                            .attr("width", plotSize)
-                            .attr("height", plotSize)
-                            .attr("fill", "#ccc0b3")
-                            .attr("rx", 3)
-                            .attr("ry", 3);
-
-                        if (i !== j) {
-                            cell.selectAll("circle")
-                                .data(data)
-                                .enter().append("circle")
-                                .attr("cx", d => xScales[i](+d[feature1]))
-                                .attr("cy", d => yScales[j](+d[feature2]))
-                                .attr("r", 2)
-                                .style("fill", d => color(d.species));
-                        } else {
-                            const histogram = d3.histogram()
-                                .domain(xScales[i].domain())
-                                .thresholds(xScales[i].ticks(20))
-                                .value(d => +d[feature1]);
-
-                            const bins = histogram(data);
-                            const yHistScale = d3.scaleLinear()
-                                .domain([0, d3.max(bins, d => d.length)])
-                                .range([plotSize, 0]);
-
-                            cell.selectAll("rect.hist")
-                                .data(bins)
-                                .enter().append("rect")
-                                .attr("class", "hist")
-                                .attr("x", d => xScales[i](d.x0))
-                                .attr("y", d => yHistScale(d.length))
-                                .attr("width", d => Math.max(0, xScales[i](d.x1) - xScales[i](d.x0) - 1))
-                                .attr("height", d => plotSize - yHistScale(d.length))
-                                .style("fill", "#eee4da");
+            for (let i = 0; i < features.length; i++) {
+                for (let j = 0; j < features.length; j++) {
+                    const currentValue = accuracyData[i][j];
+                    layout.annotations.push({
+                        xref: 'x',
+                        yref: 'y',
+                        x: features[j].replace('_', ' '),
+                        y: features[i].replace('_', ' '),
+                        text: currentValue.toFixed(2),
+                        showarrow: false,
+                        font: {
+                            color: currentValue > 0.8 ? 'white' : 'black'
                         }
                     });
-                });
-            });
+                }
+            }
+
+            Plotly.newPlot('accuracy-chart', [trace], layout, {responsive: true});
         }
 
-        createMultivariateChart();
+        function calculateAccuracy() {
+            const features = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width'];
+            const dataSize = currentData.length;
+            
+            // This is a simplified simulation of accuracy calculation
+            // In a real scenario, you'd use actual machine learning models
+            let accuracyData = [];
+            for (let i = 0; i < features.length; i++) {
+                let row = [];
+                for (let j = 0; j < features.length; j++) {
+                    if (i === j) {
+                        row.push(1.0);
+                    } else {
+                        // Simulate accuracy based on data size and feature combination
+                        let baseAccuracy = 0.7 + Math.random() * 0.2;
+                        let sizeEffect = Math.log(dataSize) / Math.log(500) * 0.1;
+                        row.push(Math.min(baseAccuracy + sizeEffect, 1.0));
+                    }
+                }
+                accuracyData.push(row);
+            }
+            return accuracyData;
+        }
 
-        // Responsive design
-        window.addEventListener('resize', function() {
-            Plotly.relayout('accuracy-chart', {
-                width: 470,
-                height: 470
+        function updateCharts() {
+            // Update pair plot
+            let pairPlotUpdate = {
+                x: [],
+                y: []
+            };
+
+            const features = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width'];
+            const species = ['setosa', 'versicolor', 'virginica'];
+
+            for (let i = 0; i < features.length; i++) {
+                for (let j = 0; j < features.length; j++) {
+                    for (let k = 0; k < species.length; k++) {
+                        if (i === j) {
+                            pairPlotUpdate.x.push(currentData.filter(d => d.species === species[k]).map(d => d[features[i]]));
+                        } else {
+                            pairPlotUpdate.x.push(currentData.filter(d => d.species === species[k]).map(d => d[features[j]]));
+                            pairPlotUpdate.y.push(currentData.filter(d => d.species === species[k]).map(d => d[features[i]]));
+                        }
+                    }
+                }
+            }
+
+            Plotly.update('pair-plot', pairPlotUpdate);
+
+            // Update accuracy chart
+            const newAccuracyData = calculateAccuracy();
+            Plotly.update('accuracy-chart', {
+                z: [newAccuracyData]
             });
-            createMultivariateChart();
-        });
+
+            // Update annotations for accuracy chart
+            let annotations = [];
+            for (let i = 0; i < features.length; i++) {
+                for (let j = 0; j < features.length; j++) {
+                    const currentValue = newAccuracyData[i][j];
+                    annotations.push({
+                        xref: 'x',
+                        yref: 'y',
+                        x: features[j].replace('_', ' '),
+                        y: features[i].replace('_', ' '),
+                        text: currentValue.toFixed(2),
+                        showarrow: false,
+                        font: {
+                            color: currentValue > 0.8 ? 'white' : 'black'
+                        }
+                    });
+                }
+            }
+            Plotly.relayout('accuracy-chart', {annotations: annotations});
+        }
+
+        function resizeCharts() {
+            const container = document.querySelector('.container');
+            const chartWidth = container.offsetWidth / 2 - 30;
+            const chartHeight = container.offsetHeight - 30;
+            
+            Plotly.relayout('pair-plot', {
+                width: chartWidth,
+                height: chartHeight
+            });
+
+            Plotly.relayout('accuracy-chart', {
+                width: chartWidth,
+                height: chartHeight
+            });
+        }
     </script>
 </body>
 </html>
